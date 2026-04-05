@@ -9,7 +9,8 @@
 | 材料 | 适合面试官看什么 |
 |------|------------------|
 | **《产品手册》（正文）** | 行业背景、用户画像、**一体两翼**功能矩阵、**四维技术架构**、竞品对比、产品优势 —— 偏「产品与方案叙事」。面试投递可另附 PDF（**务必使用脱敏版**，见下文安全提示）。 |
-| **本 GitHub 仓库** | 可导入的 **工作流 JSON**、**提示词**（`.txt`）、**代码节点**（`.py`）、流程截图 —— 偏「可验证的实现与编排」。 |
+| **[`docs/product-brief.zh-CN.md`](docs/product-brief.zh-CN.md)** | 仓库内**脱敏一页纸**：定位、痛点、D.A.T.A.、一体两翼、用户、架构摘要；GitHub 上可直接打开，或打印为 PDF 作附件。说明见 [`docs/README.md`](docs/README.md)。 |
+| **本仓库其余文件** | 可导入的 **工作流 JSON**、**提示词**（`.txt`）、**代码节点**（`.py`）、流程截图 —— 偏「可验证的实现与编排」。 |
 
 两者互斥互补：手册讲「为什么、做什么、比竞品强在哪」；仓库讲「节点怎么接、提示词与工程长什么样」。
 
@@ -60,6 +61,9 @@
 
 ```
 ├── README.md
+├── docs/
+│   ├── README.md                    # docs 目录说明
+│   └── product-brief.zh-CN.md       # 脱敏产品简报（可打印为 PDF）
 ├── 文件说明.txt
 ├── requirements.txt
 ├── .env.example
@@ -106,9 +110,27 @@ cp .env.example .env   # 仅填写你自己的 COS 等密钥
 
 ## GitHub 展示建议
 
+### 仓库 Description（复制到 GitHub 仓库设置 → Description）
+
+**中文（约 100 字，可直接粘贴）：**
+
+```text
+Data合规星｜腾讯云 ADP：隐私政策智能审查、个保合规评估报告与法律咨询；本仓含工作流 JSON、提示词与 Python 交付节点。详见 docs/product-brief.zh-CN.md
+```
+
+**English（≤120 字符，可直接粘贴）：**
+
+```text
+Tencent Cloud ADP agent: app privacy-policy review, PII reports & legal Q&A — workflow JSON, prompts, Python glue code.
+```
+
+（更长版示例：`Data合规星 on Tencent Cloud ADP: privacy-policy review, PII reports & legal Q&A — workflow JSON, prompts & Python. See docs/product-brief.zh-CN.md`。）
+
+### 其余设置
+
 1. **仓库名**：英文短名便于检索，如 `data-heguixing-workflow`、`privacy-policy-compliance-agent`。  
 2. **Topics**：`agent`, `llm`, `legaltech`, `privacy`, `compliance`, `tencent-cloud`, `prompt-engineering`, `rag`（按实际选用）。  
-3. **面试组合**：本仓库链接 + **脱敏后**《产品手册》PDF（或作品集一页纸），叙事闭环。
+3. **面试组合**：本仓库链接 + [`docs/product-brief.zh-CN.md`](docs/product-brief.zh-CN.md)（或自行导出 PDF）+ 可选 **脱敏**完整《产品手册》。
 
 ---
 
