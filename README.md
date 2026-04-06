@@ -40,13 +40,6 @@ The entire agent runs as a **multi-node workflow** on Tencent Cloud ADP (similar
                                                                    (Markdown / Word)
 ```
 
-**Screenshots of the actual workflow:**
-
-| | |
-|---|---|
-| ![overview-1](screenshots/workflow-overview-1.png) | ![overview-2](screenshots/workflow-overview-2.png) |
-| ![overview-3](screenshots/workflow-overview-3.png) | ![file-collector](screenshots/file-collector-output.png) |
-
 ---
 
 ## Key Design Decisions
@@ -81,7 +74,6 @@ The entire agent runs as a **multi-node workflow** on Tencent Cloud ADP (similar
 │   ├── md_merge_upload.py         # Merge markdown outputs → upload to COS
 │   ├── md_upload.py               # Single markdown → upload to COS
 │   └── word_url_extractor.py      # Extract download URL from plugin response
-├── screenshots/                   # Workflow UI screenshots
 ├── docs/
 │   └── product-brief.zh-CN.md     # One-page product brief (sanitized)
 ├── .env.example
