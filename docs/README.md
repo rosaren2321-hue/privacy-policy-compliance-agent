@@ -1,8 +1,7 @@
-# docs · 对外展示用材料
+# docs/
 
-| 文件 | 用途 |
-|------|------|
-| [`product-brief.zh-CN.md`](./product-brief.zh-CN.md) | **脱敏**产品一页纸（与完整《产品手册》互补）。可在 GitHub 直接阅读，或用浏览器「打印 → 存为 PDF」生成附件。 |
-| `product-brief.zh-CN.pdf`（可选） | 若你本地导出 PDF，建议固定此文件名并放入本目录；**勿**提交含登录账号、密码、内部主账号 ID 的版本。 |
+| File | Description |
+|------|-------------|
+| [`product-brief.zh-CN.md`](./product-brief.zh-CN.md) | One-page product brief (sanitized). Can be viewed on GitHub directly or printed to PDF. |
 
-完整行业背景、竞品长表、附件索引等仍以团队《产品手册》为准；对外投递前请确认手册已脱敏。
+Full product manual with competitive analysis and appendices is maintained separately and shared on request.

@@ -1,148 +1,141 @@
-# Data 合规星 · 隐私政策智能审查工作流
+# Data 合规星 — 隐私政策智能审查 Agent
 
-**English:** **Data合规星** — a vertical LegalTech agent on **Tencent Cloud ADP** for **privacy-policy review**, **PII compliance assessment reports**, and **data-compliance Q&A**. This repo holds the **exported workflow**, **prompts**, and **Python glue code** for document handling and delivery URLs.
-
----
-
-## 本仓库与《产品手册》的分工
-
-| 材料 | 适合面试官看什么 |
-|------|------------------|
-| **《产品手册》（正文）** | 行业背景、用户画像、**一体两翼**功能矩阵、**四维技术架构**、竞品对比、产品优势 —— 偏「产品与方案叙事」。面试投递可另附 PDF（**务必使用脱敏版**，见下文安全提示）。 |
-| **[`docs/product-brief.zh-CN.md`](docs/product-brief.zh-CN.md)** | 仓库内**脱敏一页纸**：定位、痛点、D.A.T.A.、一体两翼、用户、架构摘要；GitHub 上可直接打开，或打印为 PDF 作附件。说明见 [`docs/README.md`](docs/README.md)。 |
-| **本仓库其余文件** | 可导入的 **工作流 JSON**、**提示词**（`.txt`）、**代码节点**（`.py`）、流程截图 —— 偏「可验证的实现与编排」。 |
-
-两者互斥互补：手册讲「为什么、做什么、比竞品强在哪」；仓库讲「节点怎么接、提示词与工程长什么样」。
+> Privacy-policy compliance review agent built on Tencent Cloud ADP (Agent Development Platform).
+> Upload an app privacy policy → get a revised draft with tracked changes + a PII compliance assessment report.
 
 ---
 
-## 面试官快速了解（30 秒版）
+## Problem
 
-| 维度 | 内容 |
-|------|------|
-| **产品定位** | 面向 APP 提供者的 **隐私政策智能审查官**：把顶尖数据合规实务经验 **数字化、标准化**，降低「懂法不懂业务 / 懂业务不懂法」的断层。（详见《产品手册》「产品概述」） |
-| **理念 D.A.T.A.** | **D**eep 行业深度 · **A**ccurate 风险识别 · **T**rustworthy 法律依据 · **A**ctionable 可落地交付 |
-| **功能矩阵「一体两翼」** | **一体**：隐私政策审查与修订（解析 → 比对 → 修订痕迹 → 交互打磨）。**两翼**：个人信息保护合规评估报告（文本 + 15 道问卷双重校验）、数据合规法律咨询（RAG + 实务案例）。本仓库主要覆盖 **一体** 与报告链路中的工程与提示词片段。 |
-| **本仓库能证明什么** | 腾讯云智能体 **工作流导出**、多段 **提示词工程**、**Python** 文档解析与 COS 交付；参数与密钥 **不写入代码库**（环境变量）。 |
+China's regulators have shifted from "formal check" to "substantive review" of app privacy policies. Manual review is **expensive, slow, and inconsistent**; generic LLMs hallucinate legal citations; pure rule-based tools can't produce **actionable legal text**.
 
-> 简历/GitHub 简介一句话示例：**基于腾讯云智能体开发平台（ADP）搭建 Data合规星隐私政策审查与合规评估工作流；参与产品方案与提示词设计，并导出可复现的工作流与代码节点。**
+**Data 合规星** bridges this gap: it combines regulation knowledge, industry templates for **39 app categories**, and structured prompt chains to deliver **reviewable, editable compliance documents** — not just a checklist.
 
 ---
 
-## 产品与流程（与手册一致的摘要）
+## What It Does — "一体两翼" (One Core, Two Wings)
 
-### 目标用户（三类）
+| Module | Description |
+|--------|-------------|
+| **Core: Policy Review & Revision** | Parses uploaded `.docx` → splits by chapter → runs two-stage LLM review (Part 1: chapters 1-3, Part 2: chapters 4-10) → outputs revised policy with ~~strikethrough~~ / **bold** / <font color="red">red additions</font> markup |
+| **Wing 1: PII Compliance Assessment** | Cross-validates policy text + 15-question survey → risk rating (High / Medium / Low) per category → structured assessment report (9×32 indicator framework) |
+| **Wing 2: Legal Q&A** | RAG-powered consultation on data compliance regulations and enforcement cases |
 
-1. **中小企业与独立开发者** — 低成本「虚拟合规官」，缓解上架与条款起草压力。  
-2. **企业法务** — 7×24 基础审查助手，统一标准、释放高价值风控精力。  
-3. **律所初级/实习生** — 标准化交付工具，对齐 39 类行业范本与审查体系。  
-
-### 技术架构（四维一体，摘要）
-
-| 层级 | 作用 |
-|------|------|
-| **知识层** | 法规与标准库、**39 类** APP 隐私政策行业范本、实务案例与公众号文章清洗、**两大评估体系**（隐私政策审查 9×32 指标；个保合规评估 3×19 指标，具体见手册附件）。 |
-| **模型层** | 低随机性：**Temperature = 0.2**，**Top-P = 0.3**；结构化提示词；代码节点做 Word/Markdown 与交付链路。 |
-| **应用层** | 标准条文替换、缺失章节补全、文本 + 问卷双重校验、风险分级（高/中/低）。 |
-| **交互层** | 对话式二次修订、修订版隐私政策 **删除线/加粗/标红** 痕迹、评估报告 **依据溯源**。 |
-
-### 本仓库对应的实现切片
-
-1. **输入**：用户上传 `.docx` 隐私政策（产品使用说明见手册；本仓库含解析与分块逻辑示例）。  
-2. **预处理**：`text.py` 提取正文、按关键词拆分章节。  
-3. **核心智能**：多节点 LLM，提示词见 `隐私政策审查与修订*.txt`、`生成评估报告.txt`。  
-4. **交付**：`md_url.py` / `md_url2.py` 上传 COS 返回 URL；`word_url.py` 解析 Word 下载链接。  
-
-流程截图：`工作流1.png`～`工作流3.png`、`文件收集节点输出变量.png`、`md2word插件输出变量.png`。
+This repo covers the **Core** and the report generation pipeline.
 
 ---
 
-## 仓库结构
+## Workflow Architecture
+
+The entire agent runs as a **multi-node workflow** on Tencent Cloud ADP (similar to Coze / Dify). No standalone backend — the platform handles orchestration, model calls, and plugin execution.
+
+```
+┌─────────────┐     ┌──────────────┐     ┌──────────────────┐     ┌──────────────┐
+│  User Input  │────▶│  File Parse   │────▶│  LLM Review ×2   │────▶│  Merge & COS  │
+│  (.docx)     │     │  (docx_parser)│     │  (prompt chains) │     │  Upload       │
+└─────────────┘     └──────────────┘     └──────────────────┘     └──────────────┘
+                                                                          │
+                                                                          ▼
+                                                                   Download URL
+                                                                   (Markdown / Word)
+```
+
+**Screenshots of the actual workflow:**
+
+| | |
+|---|---|
+| ![overview-1](screenshots/workflow-overview-1.png) | ![overview-2](screenshots/workflow-overview-2.png) |
+| ![overview-3](screenshots/workflow-overview-3.png) | ![file-collector](screenshots/file-collector-output.png) |
+
+---
+
+## Key Design Decisions
+
+| Decision | Why |
+|----------|-----|
+| **Temperature 0.2 / Top-P 0.3** | Legal text demands precision over creativity; low randomness reduces hallucination of non-existent regulations |
+| **Two-stage prompt split (Part 1 + Part 2)** | A single prompt for all 10 chapters exceeded context limits and degraded output quality; splitting by chapter groups keeps each prompt focused |
+| **Tracked-changes markup** (strikethrough + bold + red) | Lawyers need to see *what changed and why* — a clean rewrite without markup is unusable in legal review workflows |
+| **Template-driven revision with data carry-over** | Standard clauses come from a curated template library; business-specific data (SDK lists, contact info, data fields) is extracted and preserved verbatim from the original policy |
+| **COS upload for delivery** | The platform doesn't natively support file downloads; uploading to Tencent Cloud Object Storage and returning a URL was the pragmatic workaround |
+
+---
+
+## Repo Structure
 
 ```
 ├── README.md
+├── workflow/
+│   ├── workflow.json              # Full workflow export (importable to ADP)
+│   ├── flow-steps.xlsx            # Node-level flow documentation
+│   ├── parameters.xlsx            # Parameter configuration
+│   ├── variables.xlsx             # Variable definitions
+│   ├── flow-references.xlsx       # Cross-node references
+│   └── sample-queries.xlsx        # Example user inputs
+├── prompts/
+│   ├── policy-review-part1.txt    # LLM prompt: chapters 1-3 (modules A-E)
+│   ├── policy-review-part2.txt    # LLM prompt: chapters 4-10 (modules F-J)
+│   └── assessment-report.txt      # LLM prompt: PII assessment report
+├── nodes/                         # Python code nodes (run inside ADP workflow)
+│   ├── docx_parser.py             # Extract text from .docx, split by chapter
+│   ├── md_merge_upload.py         # Merge markdown outputs → upload to COS
+│   ├── md_upload.py               # Single markdown → upload to COS
+│   └── word_url_extractor.py      # Extract download URL from plugin response
+├── screenshots/                   # Workflow UI screenshots
 ├── docs/
-│   ├── README.md                    # docs 目录说明
-│   └── product-brief.zh-CN.md       # 脱敏产品简报（可打印为 PDF）
-├── 文件说明.txt
-├── requirements.txt
+│   └── product-brief.zh-CN.md     # One-page product brief (sanitized)
 ├── .env.example
-├── 工作流1.png ~ 工作流3.png
-├── 文件收集节点输出变量.png
-├── md2word插件输出变量.png
-├── 隐私政策审查与修订1.txt
-├── 隐私政策审查与修订2.txt
-├── 生成评估报告.txt
-├── text.py
-├── word_url.py
-├── md_url.py
-├── md_url2.py
-└── export-Data合规星-…/
-    ├── c5b873df-…_workflow.json
-    ├── 工作流程.xlsx、变量.xlsx 等
-    └── …
+├── requirements.txt
+└── LICENSE
 ```
-
-> **《产品手册》正文** 建议放在团队内部或面试单独发送；**不要**将含账号密码的打印版/PDF 与公开仓库绑在一起。
 
 ---
 
-## 本地复现（代码节点）
+## Prompt Engineering Highlights
+
+The prompts in `prompts/` are the core IP of this project. Key patterns:
+
+- **Role assignment**: Each prompt starts with a specific persona ("隐私政策重构引擎-Part1") with clearly scoped responsibilities
+- **Module-based template library**: Clauses are organized into reusable modules (A through J), each covering a specific legal topic with fill-in-the-blank slots
+- **Three-tier markup protocol**: The prompt enforces strict formatting rules — strikethrough for corrections, bold for replacements, red for additions — ensuring consistent, review-friendly output
+- **Data preservation directive**: Explicit instructions to "carry over" business-specific data verbatim, preventing the LLM from paraphrasing or dropping critical details like SDK names, contact info, and data field lists
+
+---
+
+## How to Import & Run
+
+1. Import `workflow/workflow.json` into Tencent Cloud ADP (or compatible platform)
+2. Configure secrets via platform's key management (see `.env.example` for required variables)
+3. Upload a `.docx` privacy policy to test
+
+For local testing of individual code nodes:
 
 ```bash
-cd /path/to/this/repo
-python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # 仅填写你自己的 COS 等密钥
+cp .env.example .env  # fill in your COS credentials
+python nodes/docx_parser.py  # etc.
 ```
 
-导入工作流：使用 `export-…/c5b873df-…_workflow.json`。密钥与 **SecretId/SecretKey** 仅在平台密钥管理或环境变量中配置，**勿**提交到公开分支。
+---
+
+## My Role
+
+Team lead for this project. Responsible for:
+- Product definition: user personas, pain-point analysis, competitive positioning, the D.A.T.A. design philosophy
+- Workflow architecture: node decomposition, data flow between LLM / code / plugin nodes
+- Prompt engineering: designed the two-stage review framework, template module library (A-J), and markup protocol
+- Code nodes: document parsing, COS upload pipeline, URL extraction logic
+- Quality iteration: testing against real privacy policies across multiple app categories
+
+See [`docs/product-brief.zh-CN.md`](docs/product-brief.zh-CN.md) for a one-page product overview.
 
 ---
 
-## 安全与合规说明
+## Security
 
-- 本仓库 **不包含** 真实云密钥。  
-- **重要**：若你的《产品手册》Word/PDF 中仍含 **演示环境登录信息、子账号密码、主账号 ID** 等，请务必在对外分享前 **彻底删除或替换**，并在腾讯云 **轮换密码/密钥**。公开 GitHub **只放本仓库这类脱敏代码与提示词**，不要把手册源文件原样上传。  
-- 演示与面试请使用 **脱敏样例隐私政策**。
-
----
-
-## GitHub 展示建议
-
-### 仓库 Description（复制到 GitHub 仓库设置 → Description）
-
-**中文（约 100 字，可直接粘贴）：**
-
-```text
-Data合规星｜腾讯云 ADP：隐私政策智能审查、个保合规评估报告与法律咨询；本仓含工作流 JSON、提示词与 Python 交付节点。详见 docs/product-brief.zh-CN.md
-```
-
-**English（≤120 字符，可直接粘贴）：**
-
-```text
-Tencent Cloud ADP agent: app privacy-policy review, PII reports & legal Q&A — workflow JSON, prompts, Python glue code.
-```
-
-（更长版示例：`Data合规星 on Tencent Cloud ADP: privacy-policy review, PII reports & legal Q&A — workflow JSON, prompts & Python. See docs/product-brief.zh-CN.md`。）
-
-### 其余设置
-
-1. **仓库名**：英文短名便于检索，如 `data-heguixing-workflow`、`privacy-policy-compliance-agent`。  
-2. **Topics**：`agent`, `llm`, `legaltech`, `privacy`, `compliance`, `tencent-cloud`, `prompt-engineering`, `rag`（按实际选用）。  
-3. **面试组合**：本仓库链接 + [`docs/product-brief.zh-CN.md`](docs/product-brief.zh-CN.md)（或自行导出 PDF）+ 可选 **脱敏**完整《产品手册》。
-
----
-
-## 个人贡献（请按需改写）
-
-- [ ] 产品手册中的需求、用户画像、竞品与差异化  
-- [ ] 工作流节点与「一体两翼」中的职责边界  
-- [ ] 提示词撰写与评测  
-- [ ] 与研发联调：文件节点、COS、插件字段  
-
----
+- No real credentials in this repo — all secrets via environment variables
+- Demo materials use anonymized/fictional privacy policies only
 
 ## License
 
-MIT License — 若赛事或单位对开源有限制，请替换或删除 LICENSE 并更新本说明。
+MIT
